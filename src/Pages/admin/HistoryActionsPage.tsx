@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getHistory } from "@/services/api";
 import type { IHistoryItem } from "@/models/type";
+import Loading from "@/components/layout/Loading";
 
 const HistoryActionsPage: React.FC = () => {
   const [historyList, setHistoryList] = useState<IHistoryItem[]>([]);
@@ -20,23 +21,8 @@ const HistoryActionsPage: React.FC = () => {
     fetchHistory();
   }, []);
 
-  const LoadingSkeleton = () => (
-    <div className="animate-pulse">
-      <div className="h-8 bg-gray-200 rounded mb-4 w-1/3"></div>
-      <div className="space-y-3">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-16 bg-gray-200 rounded"></div>
-        ))}
-      </div>
-    </div>
-  );
-
   if (loading) {
-    return (
-      <div className="p-6 bg-white rounded-xl shadow">
-        <LoadingSkeleton />
-      </div>
-    );
+    return <Loading />;
   }
 
   return (
