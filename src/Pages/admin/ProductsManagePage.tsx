@@ -1,5 +1,6 @@
 import CreateUpdateModal from "@/components/admin/CreateUpdateModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
+import StatusConfirmModal from "@/components/admin/StatusConfirmModal";
 import Loading from "@/components/layout/Loading";
 import type { ICategory, IProduct } from "@/models/type";
 import {
@@ -17,6 +18,8 @@ export default function ProductsManagePage() {
   const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<IProduct | null>(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [productToToggleStatus, setProductToToggleStatus] = useState<IProduct | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [sortOption, setSortOption] = useState("default");
@@ -164,13 +167,29 @@ export default function ProductsManagePage() {
       }
     });
 
-  const handleToggleStatus = async (product: IProduct) => {
-    try {
-      await toggleProductStatus(product.id, !product.status);
-      fetchProducts();
-    } catch (error) {
-      console.error("Failed to update status:", error);
+  const handleToggleStatus = (product: IProduct) => {
+    setProductToToggleStatus(product);
+    setIsStatusModalOpen(true);
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (productToToggleStatus) {
+      try {
+        await toggleProductStatus(productToToggleStatus.id, !productToToggleStatus.status);
+        fetchProducts();
+        // Đóng modal sau khi thành công
+        handleCloseStatusModal();
+      } catch (error) {
+        console.error("Failed to update status:", error);
+        // Có thể thêm toast notification ở đây
+        // Modal vẫn mở để user có thể thử lại
+      }
     }
+  };
+
+  const handleCloseStatusModal = () => {
+    setIsStatusModalOpen(false);
+    setProductToToggleStatus(null);
   };
 
   // Pagination logic
@@ -557,6 +576,14 @@ export default function ProductsManagePage() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
         productName={productToDelete?.name || ""}
+      />
+
+      <StatusConfirmModal
+        isOpen={isStatusModalOpen}
+        onClose={handleCloseStatusModal}
+        onConfirm={handleConfirmStatusChange}
+        productName={productToToggleStatus?.name || ""}
+        currentStatus={productToToggleStatus?.status || false}
       />
     </div>
   );
