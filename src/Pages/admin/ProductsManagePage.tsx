@@ -20,6 +20,7 @@ export default function ProductsManagePage() {
   const [productToDelete, setProductToDelete] = useState<IProduct | null>(null);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [productToToggleStatus, setProductToToggleStatus] = useState<IProduct | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [sortOption, setSortOption] = useState("default");
@@ -168,6 +169,9 @@ export default function ProductsManagePage() {
     });
 
   const handleToggleStatus = (product: IProduct) => {
+    // Không cho phép mở modal nếu đang trong quá trình cập nhật
+    if (isUpdatingStatus) return;
+    
     setProductToToggleStatus(product);
     setIsStatusModalOpen(true);
   };
@@ -175,6 +179,7 @@ export default function ProductsManagePage() {
   const handleConfirmStatusChange = async () => {
     if (productToToggleStatus) {
       try {
+        setIsUpdatingStatus(true);
         await toggleProductStatus(productToToggleStatus.id, !productToToggleStatus.status);
         fetchProducts();
         // Đóng modal sau khi thành công
@@ -183,6 +188,8 @@ export default function ProductsManagePage() {
         console.error("Failed to update status:", error);
         // Có thể thêm toast notification ở đây
         // Modal vẫn mở để user có thể thử lại
+      } finally {
+        setIsUpdatingStatus(false);
       }
     }
   };
@@ -190,6 +197,7 @@ export default function ProductsManagePage() {
   const handleCloseStatusModal = () => {
     setIsStatusModalOpen(false);
     setProductToToggleStatus(null);
+    setIsUpdatingStatus(false); // Reset trạng thái khi đóng modal
   };
 
   // Pagination logic
@@ -464,13 +472,39 @@ export default function ProductsManagePage() {
                       <div className="flex gap-2 flex-wrap">
                         <button
                           onClick={() => handleToggleStatus(p)}
-                          className={`px-3 py-1 rounded text-sm text-white ${
+                          disabled={isUpdatingStatus}
+                          className={`px-3 py-1 rounded text-sm text-white transition-colors ${
                             p.status
                               ? "bg-gray-500 hover:bg-gray-600"
                               : "bg-green-500 hover:bg-green-600"
+                          } ${
+                            isUpdatingStatus 
+                              ? "opacity-50 cursor-not-allowed" 
+                              : "hover:shadow-md"
                           }`}
                         >
-                          {p.status ? "Disable" : "Enable"}
+                          {isUpdatingStatus ? (
+                            <span className="flex items-center gap-1">
+                              <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                                <circle 
+                                  className="opacity-25" 
+                                  cx="12" 
+                                  cy="12" 
+                                  r="10" 
+                                  stroke="currentColor" 
+                                  strokeWidth="4"
+                                />
+                                <path 
+                                  className="opacity-75" 
+                                  fill="currentColor" 
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                />
+                              </svg>
+                              Updating...
+                            </span>
+                          ) : (
+                            p.status ? "Disable" : "Enable"
+                          )}
                         </button>
                         <button
                           onClick={() => handleEdit(p)}
@@ -584,6 +618,7 @@ export default function ProductsManagePage() {
         onConfirm={handleConfirmStatusChange}
         productName={productToToggleStatus?.name || ""}
         currentStatus={productToToggleStatus?.status || false}
+        isUpdating={isUpdatingStatus}
       />
     </div>
   );

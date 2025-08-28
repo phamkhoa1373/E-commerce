@@ -6,6 +6,7 @@ import { IProduct } from "../../models/type";
 export default function StatusConfirmModalDemo() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<IProduct | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Mock data cho demo
   const mockProduct: IProduct = {
@@ -25,20 +26,33 @@ export default function StatusConfirmModalDemo() {
     setIsModalOpen(true);
   };
 
-  const handleConfirmStatusChange = () => {
+  const handleConfirmStatusChange = async () => {
     if (selectedProduct) {
-      // Ở đây bạn sẽ gọi API để thay đổi trạng thái sản phẩm
-      console.log(`Changing status for product: ${selectedProduct.name}`);
-      console.log(`New status will be: ${!selectedProduct.status}`);
-      
-      // Sau khi API thành công, bạn có thể cập nhật state hoặc refetch data
-      // Ví dụ: refetchProducts() hoặc updateProductStatus(selectedProduct.id, !selectedProduct.status)
+      try {
+        setIsUpdating(true);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        console.log(`Changing status for product: ${selectedProduct.name}`);
+        console.log(`New status will be: ${!selectedProduct.status}`);
+        
+        // Sau khi API thành công, bạn có thể cập nhật state hoặc refetch data
+        // Ví dụ: refetchProducts() hoặc updateProductStatus(selectedProduct.id, !selectedProduct.status)
+        
+        // Đóng modal sau khi thành công
+        handleCloseModal();
+      } catch (error) {
+        console.error('Error updating status:', error);
+      } finally {
+        setIsUpdating(false);
+      }
     }
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedProduct(null);
+    setIsUpdating(false);
   };
 
   return (
@@ -91,6 +105,7 @@ export default function StatusConfirmModalDemo() {
           onConfirm={handleConfirmStatusChange}
           productName={selectedProduct.name}
           currentStatus={selectedProduct.status}
+          isUpdating={isUpdating}
         />
       )}
     </div>
