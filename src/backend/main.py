@@ -514,12 +514,60 @@ def update_order_status(order_id: int, data: StatusUpdate):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/history/debug")
+def get_history_debug():
+    """Debug endpoint để xem cấu trúc dữ liệu thô từ database"""
+    try:
+        # Lấy dữ liệu thô từ history_actions
+        raw_history = supabase.table("history_actions").select("*").limit(5).execute()
+        
+        # Lấy dữ liệu với join
+        joined_history = supabase.table("history_actions") \
+            .select("*, profile(username), products(name)") \
+            .limit(5) \
+            .execute()
+        
+        return {
+            "raw_data": raw_history.data,
+            "joined_data": joined_history.data,
+            "message": "Debug data for history API"
+        }
+    except Exception as e:
+        print(f"Error in debug endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/history")
 def get_history():
     try:
-        result = supabase.table("history_actions").select("*").order("created_at", desc=True).execute()
-        return result.data
+        # Join với bảng profile để lấy username và join với products để lấy tên sản phẩm
+        result = supabase.table("history_actions") \
+            .select("*, profile(username), products(name)") \
+            .order("created_at", desc=True) \
+            .execute()
+        
+        # Xử lý dữ liệu để format đúng cấu trúc
+        history_data = []
+        for item in result.data:
+            # Xử lý an toàn cho các trường có thể null
+            profile_data = item.get("profile", {})
+            products_data = item.get("products", {})
+            
+            history_item = {
+                "id": item["id"],
+                "user_id": item["user_id"],
+                "username": profile_data.get("username") if profile_data else None,
+                "product_id": item["product_id"],
+                "history": item["history"],
+                "created_at": item["created_at"],
+                "products": {
+                    "name": products_data.get("name", "N/A")
+                } if products_data else {"name": "N/A"}
+            }
+            history_data.append(history_item)
+        
+        return history_data
     except Exception as e:
+        print(f"Error fetching history: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
