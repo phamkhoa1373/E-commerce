@@ -57,7 +57,7 @@ const HistoryActionsPage: React.FC = () => {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="border py-3 px-4 text-left font-semibold text-gray-700">ID</th>
-                  <th className="border py-3 px-4 text-left font-semibold text-gray-700">User</th>
+                  <th className="border py-3 px-4 text-left font-semibold text-gray-700">Username</th>
                   <th className="border py-3 px-4 text-left font-semibold text-gray-700">Product</th>
                   <th className="border py-3 px-4 text-left font-semibold text-gray-700">Action</th>
                   <th className="border py-3 px-4 text-left font-semibold text-gray-700">Details</th>
@@ -84,7 +84,9 @@ const HistoryActionsPage: React.FC = () => {
                         {index + 1}
                       </td>
                       <td className="border py-3 px-4">
-                        <span className="font-medium text-gray-900">#{item.user_id}</span>
+                        <span className="font-medium text-gray-900">
+                          {item.username || `User #${item.user_id}`}
+                        </span>
                       </td>
                       <td className="border py-3 px-4">
                         <span className="font-medium text-gray-900">
