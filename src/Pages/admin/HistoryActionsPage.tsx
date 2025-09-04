@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { getHistory } from "@/services/api";
 import type { IHistoryItem } from "@/models/type";
+import Loading from "@/components/layout/Loading";
+import { formatDate } from "@/helper/utils";
 
 const HistoryActionsPage: React.FC = () => {
   const [historyList, setHistoryList] = useState<IHistoryItem[]>([]);
@@ -21,67 +23,119 @@ const HistoryActionsPage: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <div className="p-4 text-center text-gray-500">Loading...</div>;
+    return <Loading />;
   }
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow">
-      <h2 className="text-2xl font-bold mb-6">History actions</h2>
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-200 rounded-lg">
-          <thead className="bg-gray-100 text-left">
-            <tr>
-              <th className="border p-3">ID</th>
-              <th className="border p-3">User</th>
-              <th className="border p-3">Product</th>
-              <th className="border p-3">Action</th>
-              <th className="border p-3">Details</th>
-              <th className="border p-3">Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {historyList.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="p-4 text-center text-gray-500">
-                  No history data available
-                </td>
-              </tr>
-            ) : (
-              historyList.map((item, index) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="border p-3 text-center">{index + 1}</td>
-                  <td className="border p-3">{item.user_id}</td>
-                  <td className="border p-3">{item.products?.name || "N/A"}</td>
-                  <td className="border p-3">
-                    <span
-                      className={`px-3 py-1 rounded text-white text-sm ${
-                        item.history.action === "create"
-                          ? "bg-green-500"
-                          : item.history.action === "update"
-                          ? "bg-yellow-500"
-                          : item.history.action === "delete"
-                          ? "bg-red-500"
-                          : "bg-blue-500"
-                      }`}
-                    >
-                      {item.history.action}
-                    </span>
-                  </td>
-                  <td className="border p-3">
-                    <div className="max-w-xs overflow-x-auto">
-                      <pre className="text-xs bg-gray-100 p-2 rounded">
-                        {JSON.stringify(item.history.details, null, 2)}
-                      </pre>
-                    </div>
-                  </td>
-                  <td className="border p-3 text-gray-600">
-                    {new Date(item.created_at).toLocaleString("vi-VN")}
-                  </td>
+    <div className="px-6 h-screen flex flex-col">
+      <div className="flex-shrink-0 mb-6">
+        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
+          History Actions
+        </h1>
+      </div>
+
+      <div className="flex-1 bg-white rounded-lg shadow-md border overflow-auto">
+        <div className="p-6 ">
+          <div className="overflow-auto ">
+            <table className="w-full border-collapse border border-gray-300 text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border py-3 px-4 text-left font-semibold text-gray-700">
+                    ID
+                  </th>
+                  <th className="border py-3 px-4 text-left font-semibold text-gray-700">
+                    User
+                  </th>
+                  <th className="border py-3 px-4 text-left font-semibold text-gray-700">
+                    Product
+                  </th>
+                  <th className="border py-3 px-4 text-left font-semibold text-gray-700">
+                    Action
+                  </th>
+                  <th className="border py-3 px-4 text-left font-semibold text-gray-700">
+                    Details
+                  </th>
+                  <th className="border py-3 px-4 text-left font-semibold text-gray-700">
+                    Time
+                  </th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {historyList.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="border py-8 text-center text-gray-500"
+                    >
+                      <div className="flex flex-col items-center overflow-y-auto">
+                        <p className="text-lg font-medium">
+                          No history data available
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  historyList.map((item, index) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="border py-3 px-4 text-center font-medium text-gray-700">
+                        {index + 1}
+                      </td>
+                      <td className="border py-3 px-4">
+                        <span className="font-medium text-gray-900">
+                          #{item.user_id}
+                        </span>
+                      </td>
+                      <td className="border py-3 px-4">
+                        <span className="font-medium text-gray-900">
+                          {item.products?.name || "N/A"}
+                        </span>
+                      </td>
+                      <td className="border py-3 px-4">
+                        <span
+                          className={`px-3 py-1 rounded-full text-white text-xs font-medium uppercase tracking-wide ${
+                            item.history.action === "create"
+                              ? "bg-green-500"
+                              : item.history.action === "update"
+                              ? "bg-yellow-500"
+                              : item.history.action === "delete"
+                              ? "bg-red-500"
+                              : "bg-blue-500"
+                          }`}
+                        >
+                          {item.history.action}
+                        </span>
+                      </td>
+                      <td className="border py-3 px-4">
+                        <div className="max-w-xs">
+                          <details className="group">
+                            <summary className="cursor-pointer text-blue-600 hover:text-blue-800 font-medium text-sm">
+                              View Details
+                            </summary>
+                            <div className="mt-2 p-3 bg-gray-50 rounded border text-xs overflow-auto">
+                              <pre className="whitespace-pre-wrap text-gray-700 text-left">
+                                {JSON.stringify(item.history.details, null, 2)}
+                              </pre>
+                            </div>
+                          </details>
+                        </div>
+                      </td>
+                      <td className="border py-3 px-4 text-gray-600">
+                        <div className="text-sm">
+                          <div className="font-medium">
+                            {formatDate(item.created_at)}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

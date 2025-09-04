@@ -1,3 +1,4 @@
+import StatusConfirmModal from "@/components/admin/StatusConfirmModal";
 import CreateUpdateModal from "@/components/admin/CreateUpdateModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 import Loading from "@/components/layout/Loading";
@@ -28,6 +29,10 @@ export default function ProductsManagePage() {
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [selectedWeek, setSelectedWeek] = useState<number | "all">("all");
   const [products, setProducts] = useState<IProduct[]>([]);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [productToToggleStatus, setProductToToggleStatus] =
+    useState<IProduct | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -164,13 +169,32 @@ export default function ProductsManagePage() {
       }
     });
 
-  const handleToggleStatus = async (product: IProduct) => {
-    try {
-      await toggleProductStatus(product.id, !product.status);
-      fetchProducts();
-    } catch (error) {
-      console.error("Failed to update status:", error);
+  const handleToggleStatus = (product: IProduct) => {
+    setProductToToggleStatus(product);
+    setIsStatusModalOpen(true);
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (productToToggleStatus) {
+      try {
+        setIsUpdatingStatus(true);
+        await toggleProductStatus(
+          productToToggleStatus.id,
+          !productToToggleStatus.status
+        );
+        await fetchProducts();
+        handleCloseStatusModal();
+      } catch (error) {
+        console.error("Failed to update status:", error);
+      } finally {
+        setIsUpdatingStatus(false);
+      }
     }
+  };
+
+  const handleCloseStatusModal = () => {
+    setIsStatusModalOpen(false);
+    setProductToToggleStatus(null);
   };
 
   // Pagination logic
@@ -445,14 +469,26 @@ export default function ProductsManagePage() {
                       <div className="flex gap-2 flex-wrap">
                         <button
                           onClick={() => handleToggleStatus(p)}
-                          className={`px-3 py-1 rounded text-sm text-white ${
+                          disabled={isUpdatingStatus}
+                          className={`px-3 py-1 rounded text-sm text-white 
+                          ${
+                            isUpdatingStatus
+                              ? "bg-gray-500 opacity-50 cursor-not-allowed"
+                              : ""
+                          }
+                          ${
                             p.status
                               ? "bg-gray-500 hover:bg-gray-600"
                               : "bg-green-500 hover:bg-green-600"
                           }`}
                         >
-                          {p.status ? "Disable" : "Enable"}
+                          {isUpdatingStatus
+                            ? "Processing..."
+                            : p.status
+                            ? "Disable"
+                            : "Enable"}
                         </button>
+
                         <button
                           onClick={() => handleEdit(p)}
                           className="px-3 py-1 bg-amber-500 text-white rounded text-sm hover:bg-amber-600 transition-colors"
@@ -557,6 +593,14 @@ export default function ProductsManagePage() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteConfirm}
         productName={productToDelete?.name || ""}
+      />
+
+      <StatusConfirmModal
+        isOpen={isStatusModalOpen}
+        onClose={handleCloseStatusModal}
+        onConfirm={handleConfirmStatusChange}
+        productName={productToToggleStatus?.name || ""}
+        currentStatus={productToToggleStatus?.status || false}
       />
     </div>
   );
